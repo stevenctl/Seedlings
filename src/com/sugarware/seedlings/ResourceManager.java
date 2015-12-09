@@ -9,7 +9,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 public class ResourceManager {
-	
+	//Central class for managing images and sounds.
 	
 	
 	//Audio

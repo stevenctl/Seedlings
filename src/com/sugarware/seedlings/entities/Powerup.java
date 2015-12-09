@@ -10,11 +10,12 @@ import com.sugarware.seedlings.Resources;
 import com.sugarware.seedlings.gamestate.GameStateManager;
 import com.sugarware.seedlings.gamestate.PlayGameState;
 
+//Probably not going to use this.
+
 public class Powerup extends ColEntity {
 	public static enum PowerType{
 		VANILLA, FLOWER, FIRE
 	}
-	
 	
 	public PowerType type;
 	

@@ -2,7 +2,7 @@ package com.sugarware.seedlings.entities;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
-
+//Controlls image cycling for animatons.
 
 public class Animation {
 	

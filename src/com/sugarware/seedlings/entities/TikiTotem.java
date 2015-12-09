@@ -6,6 +6,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.sugarware.seedlings.gamestate.PlayGameState;
 
+//Will shoot fireballs. Not yet implemented.
+
 public class TikiTotem extends ColEntity {
 
 	public boolean facingRight;

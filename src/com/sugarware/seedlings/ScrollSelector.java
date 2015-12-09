@@ -9,6 +9,8 @@ import com.sugarware.seedlings.gamestate.GameState;
 
 public class ScrollSelector {
 
+	//The scrolling wheel in the top right corner for choosing the character
+	
  public float theta;
 	float startangle;
 	float endangle;

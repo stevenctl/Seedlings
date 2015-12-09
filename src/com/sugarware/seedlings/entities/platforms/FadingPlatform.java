@@ -8,6 +8,8 @@ import com.sugarware.seedlings.gamestate.PlayGameState;
 
 public class FadingPlatform extends MovingPlatform{
 
+	//Used for ice platforms
+	
 	float alpha;
 	
 	public FadingPlatform(PlayGameState gs, float x, float y, int width,int height) {

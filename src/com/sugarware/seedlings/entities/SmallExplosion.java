@@ -8,6 +8,8 @@ import com.sugarware.seedlings.gamestate.PlayGameState;
 public class SmallExplosion extends ColEntity {
 
 	
+	//TODO Combine with regular explosion class, change the image and width/height
+	
 	private Animation animation;
 	int width = 32;
 	int height = 32;

@@ -20,7 +20,7 @@ import com.sugarware.seedlings.gamestate.PlayGameState;
 
 public class LoneLevel extends PlayGameState{
 	
-	
+	//Level for the subgame
 
 	
 	boolean reset;

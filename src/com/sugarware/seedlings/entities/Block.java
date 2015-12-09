@@ -23,11 +23,7 @@ import com.sugarware.seedlings.gamestate.PlayGameState;
 
 public class Block extends ColEntity {
 
-	/*
-	 * 
-	 * Collisions
-	 * 
-	 */
+	//pushable block
 	
 	boolean PUSHED = false;
 	

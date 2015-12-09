@@ -13,15 +13,17 @@ import com.sugarware.seedlings.gamestate.PlayGameState;
 
 public class TouchController implements InputProcessor{
 
-	
+	//Controller for translating on screen controls to keypresses
 	
 	boolean down;
 	private int scheme;
 	GdxGame game;
 	private Vector3 coords;
 	int[] pointer;
+	
 	//GUI Batch
 	SpriteBatch h;
+	
 	//Images
 	TextureRegion btnUp;
 	TextureRegion btnAction;

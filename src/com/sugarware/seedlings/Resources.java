@@ -2,6 +2,8 @@ package com.sugarware.seedlings;
 
 public class Resources {
 	
+	//Static class for convinient hierarchy for resource indicies
+	
 	public static class CharacterIcons{
 		public static final int VANILLA = 0;
 		public static final int FLOWER = 1;

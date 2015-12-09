@@ -16,6 +16,8 @@ import com.sugarware.seedlings.gamestate.PlayGameState;
 
 public class LoneBad extends Player {
 
+	//Bad guy for the Lone subgame
+	
 	
 	public Color c;
 	

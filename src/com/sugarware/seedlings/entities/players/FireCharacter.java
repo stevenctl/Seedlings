@@ -210,18 +210,6 @@ public class FireCharacter extends Player {
 			
 		}
 		
-	/*	g.end();
-		s.setProjectionMatrix(gs.cam.combined);
-		s.setColor(Color.RED);
-		s.begin(ShapeType.Line);
-		s.line(x, y + cheight, x + cwidth,y + cheight);
-		s.line(x, y, x + cwidth,y);
-		s.line(x, y, x, y + cheight);
-		s.line(x + cwidth, y, x + cwidth,y + cheight);
-		s.end();
-		g.begin();*/
-		
-		
 	}
 	
 	public void keyPressed(int k){

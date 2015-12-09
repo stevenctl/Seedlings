@@ -3,14 +3,12 @@ package com.sugarware.seedlings;
 
 public class Shaders {
 	
-	//Water Textures
+
+	
 
 	
 	
-
-	
-	
-	
+	//Surface waves
 	
 	public static String waterFragmentShader = "#ifdef GL_ES\n"
 			+ "precision mediump float;\n"
@@ -28,6 +26,8 @@ public class Shaders {
 			//+ "  float t=v_texCoords.y +displacement.y*0.7-0.15+  (sin(v_texCoords.x * 40.0+cos(ampdelta)*3 / 4) * (0.115 * cos(ampdelta))); \n" //
 			+ "  gl_FragColor = v_color * texture2D(u_texture, vec2(v_texCoords.x,t));\n"
 			+ "}";
+	
+	//Refraction
 	
 	public static String water2FragmentShader = "#ifdef GL_ES\n"
 			+ "precision mediump float;\n"

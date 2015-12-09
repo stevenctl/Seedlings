@@ -13,14 +13,13 @@ public class MyIntersector {
 	static Vector2 v2;
 	static Vector2 v2_;
 	
+	//Custom intersector for polylines and rectangles. Used for the slope collisions.
 	public static boolean isCollision(Polygon p, Rectangle r) {
 		if(rPoly == null)rPoly = new Polygon();
 		if(fl == null)fl = new float[8];
 		
 		fl[0] = 0; fl[1] = 0; fl[2] = r.width; fl[3] = 0; fl[4] = r.width; fl[5] = r.height; fl[6] = 0; fl[7] = r.height;
 		rPoly.setVertices(fl);
-		
-	 
 	    rPoly.setPosition(r.x, r.y);
 	   
 	    return Intersector.overlapConvexPolygons(rPoly, p);

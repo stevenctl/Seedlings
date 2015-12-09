@@ -11,6 +11,8 @@ import com.sugarware.seedlings.gamestate.GameStateManager;
 import com.sugarware.seedlings.gamestate.PlayGameState;
 
 public class MovingPlatform extends Platform {
+
+	
 	public boolean UP;
 	public boolean RIGHT;
 	public float vspeed;

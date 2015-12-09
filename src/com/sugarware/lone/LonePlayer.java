@@ -13,6 +13,8 @@ import com.sugarware.seedlings.gamestate.PlayGameState;
 public class LonePlayer extends Player {
 
 	
+	//Player for the subgame
+	
 	//Animation Indicies
 	public static final int IDLE = 0;
 	public static final int RUN = 1;
