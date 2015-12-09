@@ -14,9 +14,9 @@ seed will need to gather help from his friends to take
 the forest back and preserve their natural habitat. 
 
 ##Controls
-*WASD - Movement
-*SPACE - Jump
-*J - Action
-*I - Change Character
-*T - Toggle Lights (when debugging)
-*= - Toggle Collision Map
+###WASD - Movement
+###SPACE - Jump
+###J - Action
+###I - Change Character
+###T - Toggle Lights (when debugging)
+###= - Toggle Collision Map
