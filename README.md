@@ -1,3 +1,5 @@
+##Discontinued. New version built with box2d. 
+
 # Seedlings
 A game by Steven Landow (code), and Trent Brew (art)
 This game is only an alpha build. It has very few bugs and
