@@ -149,7 +149,7 @@ animations = [ {
 "frames": [ SubResource( 32 ), SubResource( 33 ) ],
 "loop": false,
 "name": "fall",
-"speed": 6.0
+"speed": 8.0
 }, {
 "frames": [ SubResource( 12 ), SubResource( 13 ), SubResource( 14 ), SubResource( 15 ), SubResource( 16 ), SubResource( 17 ), SubResource( 18 ), SubResource( 19 ), SubResource( 20 ), SubResource( 21 ), SubResource( 22 ), SubResource( 23 ) ],
 "loop": true,
@@ -159,7 +159,7 @@ animations = [ {
 "frames": [ SubResource( 28 ), SubResource( 29 ), SubResource( 30 ) ],
 "loop": false,
 "name": "jump",
-"speed": 5.0
+"speed": 8.0
 } ]
 
 [sub_resource type="RectangleShape2D" id=26]
