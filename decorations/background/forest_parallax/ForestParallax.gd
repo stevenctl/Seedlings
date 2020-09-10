@@ -1,12 +1,11 @@
 extends ParallaxBackground
-tool
 
 func _ready() -> void:
 	var i = 0
 	for c in get_children():
 		var pl = c as ParallaxLayer
 		var denom = (get_child_count() - i)
-		pl.motion_scale = Vector2(1/denom, 1.5/denom)
+		pl.motion_scale = Vector2.RIGHT / denom
 		for cc in c.get_children():
 			var s: Sprite = cc as Sprite
 			s.region_enabled = true
