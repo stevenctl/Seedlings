@@ -13,6 +13,10 @@ onready var velocity: Vector2 = Vector2()
 
 onready var sprite: AnimatedSprite =  get_node("AnimatedSprite")
 
+func _ready():
+	sprite.connect("animation_finished", self, "end_dive")
+	
+
 func _physics_process(delta: float):
 	# do movement - move and slide must happen to know if we're on ground/ceil
 	velocity = move_and_slide(velocity, Vector2.UP)
@@ -31,12 +35,36 @@ func _get_input():
 	if Input.is_action_pressed("right"):
 		input.x += 1
 
+var dive_dir = 0
+
 func _move_h():
-	velocity.x = input.x * walk_speed
-	if input.x > 0:
-		facing_right = true
-	elif input.x < 0:
-		facing_right= false
+	if dive_dir == 0:
+		if input.x > 0:
+			facing_right = true
+		elif input.x < 0:
+			facing_right= false
+			
+	if Input.is_action_just_pressed("dive"):
+		dive_dir = 1 if facing_right else -1
+		velocity.y = 0
+		jump_time = 0
+	
+	if dive_dir == 0:
+		velocity.x = input.x * walk_speed
+	else:
+		velocity.x = dive_dir * walk_speed * 2
+		var dive_cancel = (Input.is_action_just_pressed("left") && dive_dir == 1) || (Input.is_action_just_pressed("right") && dive_dir == -1)
+		if dive_cancel and sprite.animation == "dive":
+			sprite.frame = max(sprite.frame, sprite.frames.get_frame_count("dive") - 6)
+			
+			
+		
+		
+	
+	
+func end_dive():
+	dive_dir = 0
+		
 
 
 export(float) var max_coyote_time: float = .1
@@ -55,8 +83,6 @@ const max_jump_debounce: float = .2
 var jump_debounce: float = 0
 
 func _move_y(delta: float):
-	
-		
 	# quick jump cancel
 	if jumping and !Input.is_action_pressed("jump"):
 		jumping = false
@@ -79,7 +105,7 @@ func _move_y(delta: float):
 	else:
 		jump_debounce -= delta
 	
-	if coyote_time > 0 and jump_debounce > 0:
+	if coyote_time > 0 and jump_debounce > 0 and dive_dir == 0:
 		jumping = true
 	
 	# jump or fall
@@ -92,7 +118,13 @@ func _move_y(delta: float):
 	velocity.y = min(velocity.y, 2.25 * jump_speed)
 	
 func _resolve_animation():
-	sprite.flip_h = !facing_right
+	# TODO - move animation logic into a proper animation controller
+	sprite.flip_h = !facing_right	
+	if dive_dir != 0:
+		sprite.play("dive")
+		return
+		
+	
 	if !is_on_floor():
 		if velocity.y > 0:
 			sprite.play('fall')
