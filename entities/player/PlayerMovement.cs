@@ -15,10 +15,12 @@ public class PlayerMovement : KinematicBody2D {
 	[Export] public bool FacingRight { get; set; } = true;
 	private Vector2 _velocity;
 	private Vector2 _input;
+	private Vector2 _startPosition;
 
 	private int _diveDir;
 
 	private bool _jumping;
+	private bool _diveJump;
 	[Export] public float MaxJumpTime = .25f;
 	private float _jumpTime;
 	[Export] private float _maxCoyoteTime = .1f;
@@ -32,7 +34,11 @@ public class PlayerMovement : KinematicBody2D {
 			SetPhysicsProcess(false);
 		}
 		_sprite = GetNode("AnimatedSprite") as AnimatedSprite;
+		if (_sprite == null) {
+			throw new Exception("PlayerMovement should have a child AnimatedSprite");
+		}
 		_sprite.Connect("animation_finished", this, "EndDive");
+		_startPosition = Position;
 	}
 
 	public override void _PhysicsProcess(float delta) {
@@ -41,9 +47,13 @@ public class PlayerMovement : KinematicBody2D {
 		_velocity = MoveAndSlide(_velocity, Vector2.Up);
 
 		ReadInput();
-		MoveH();
+		MoveH(delta);
 		MoveV(delta);
 		ResolveAnimation();
+
+		if (Position.y > 100) {
+			Position = _startPosition;
+		}
 	}
 
 	// Calculates the input vector each frame
@@ -61,27 +71,31 @@ public class PlayerMovement : KinematicBody2D {
 	}
 
 	// Horizontal movement
-	private void MoveH() {
+	private void MoveH(float delta) {
 		// if we're not diving, set the sprite-flip based on input (not movement)
 		if (_diveDir == 0) {
 			FacingRight = _input.x != 0 && _input.x > 0 || FacingRight;
 			FacingRight = (_input.x == 0 || !(_input.x < 0)) && FacingRight;
 		}
 
-		if (Input.IsActionJustPressed("dive")) {
-			_diveDir = FacingRight ? 1 : -1;
-			_velocity.y = 0;
-			_jumpTime = 0;
+		
+		if (_diveDir != 0) { // dive move
+			_velocity.x = _diveDir * WalkSpeed * 2;
+		} else { // walk move
+			_velocity.x = _input.x * WalkSpeed;
 		}
 
-		if (_diveDir == 0) {
-			_velocity.x = _input.x * WalkSpeed;
-		} else {
-			_velocity.x = _diveDir * WalkSpeed * 2;
-			// cancel dive by moving in opposite direction
-			if (_input.x + _diveDir == 0) {
-				_sprite.Frame = Math.Max(_sprite.Frame, _sprite.Frames.GetFrameCount("dive") - 4);
-			}
+		// dive start
+		if (Input.IsActionJustPressed("dive")) {
+			_jumping = false;
+			_diveDir = FacingRight ? 1 : -1;
+			_velocity.y = -2 * GravAccel * delta;
+			_jumpTime = 0;
+		}
+		// dive cancel
+		if (_diveDir != 0 && _input.x + _diveDir == 0) {
+			_sprite.Frame = Math.Max(_sprite.Frame, _sprite.Frames.GetFrameCount("dive") - 6);
+			_velocity.y = 0;
 		}
 	}
 
@@ -92,12 +106,12 @@ public class PlayerMovement : KinematicBody2D {
 	// Vertical Movement
 	private void MoveV(float delta) {
 		// quick jump cancel
-		if (_jumping && !Input.IsActionPressed("jump")) {
+		if (IsOnCeiling() || (_jumping && !Input.IsActionPressed("jump"))) {
 			_jumping = false;
 			_jumpTime = 0;
 			_jumpDebounce = 0;
 			// some hang time
-			_velocity.y = Math.Max(2 * GravAccel * delta, _velocity.x);
+			_velocity.y = Math.Max(2 * GravAccel * delta, _velocity.y);
 		}
 
 		// can we jump
@@ -111,6 +125,7 @@ public class PlayerMovement : KinematicBody2D {
 
 		// jump debounce allows pressing the jump button on an early frame
 		if (Input.IsActionJustPressed("jump")) {
+			_diveJump = _diveDir != 0;
 			_jumpDebounce = _maxJumpDebounce;
 		} else {
 			_jumpDebounce -= delta;
@@ -121,6 +136,9 @@ public class PlayerMovement : KinematicBody2D {
 
 		if (_jumping && _jumpTime > 0) {
 			_velocity.y = -JumpSpeed;
+			if (_diveJump) {
+				_velocity.y *= 1.25f;
+			}
 			_jumpTime -= delta;
 		} else {
 			_velocity.y += GravAccel * delta;
