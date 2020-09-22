@@ -93,7 +93,7 @@ public class PlayerMovement : KinematicBody2D {
 			_jumpTime = 0;
 		}
 		// dive cancel
-		if (_diveDir != 0 && _input.x + _diveDir == 0) {
+		if (_diveDir != 0 && Input.IsActionJustReleased("dive")) {
 			_sprite.Frame = Math.Max(_sprite.Frame, _sprite.Frames.GetFrameCount("dive") - 6);
 			_velocity.y = 0;
 		}
