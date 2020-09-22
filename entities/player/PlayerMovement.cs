@@ -9,7 +9,8 @@ public class PlayerMovement : KinematicBody2D {
 	[Export] public int GravAccel { get; set; } = 1800;
 
 	// Node refs
-	private AnimatedSprite _sprite;
+	private Sprite _sprite;
+	private AnimationPlayer _animation;
 
 	// State
 	[Export] public bool FacingRight { get; set; } = true;
@@ -33,11 +34,14 @@ public class PlayerMovement : KinematicBody2D {
 			SetProcess(false);
 			SetPhysicsProcess(false);
 		}
-		_sprite = GetNode("AnimatedSprite") as AnimatedSprite;
+
+		_sprite = GetNode<Sprite>("Sprite");
+		_animation = GetNode<AnimationPlayer>("AnimationPlayer");
 		if (_sprite == null) {
 			throw new Exception("PlayerMovement should have a child AnimatedSprite");
 		}
-		_sprite.Connect("animation_finished", this, "EndDive");
+
+		_animation.Connect("animation_finished", this, "EndDive");
 		_startPosition = Position;
 	}
 
@@ -50,10 +54,10 @@ public class PlayerMovement : KinematicBody2D {
 		MoveH(delta);
 		MoveV(delta);
 		ResolveAnimation();
-
-		if (Position.y > 100) {
-			Position = _startPosition;
-		}
+		//
+		// if (Position.y > 100) {
+		// 	Position = _startPosition;
+		// }
 	}
 
 	// Calculates the input vector each frame
@@ -101,13 +105,15 @@ public class PlayerMovement : KinematicBody2D {
 
 			_jumpTime = 0;
 		}
+
 		// dive cancel
 		if (_diveDir != 0 && Input.IsActionJustReleased("dive")) {
-			_sprite.Frame = Math.Max(_sprite.Frame, _sprite.Frames.GetFrameCount("dive") - 6);
+			var diveAnim = _animation.GetAnimation("dive");
+			diveAnim.Step = Math.Max(diveAnim.Step, diveAnim.Length / 2);
 		}
 	}
 
-	public void EndDive() {
+	public void EndDive(string name) {
 		_diveDir = 0;
 	}
 
@@ -159,23 +165,21 @@ public class PlayerMovement : KinematicBody2D {
 	}
 
 	private void ResolveAnimation() {
+		// TODO maybe animation tree will be worth it.. eventually
 		_sprite.FlipH = !FacingRight;
 
 		string play;
 		if (_diveDir != 0) {
 			play = "dive";
 		} else if (!IsOnFloor()) {
-			if (Velocity.y > 0) {
-				play = "fall";
-			} else {
-				play = "jump";
-			}
+			play = Velocity.y > 0 ? "fall" : "jump";
 		} else if (_input.x != 0) {
 			play = "run";
 		} else {
 			play = "idle";
 		}
 
-		_sprite.Play(play);
+		if (_animation.AssignedAnimation != play)
+			_animation.Play(play);
 	}
 }
