@@ -13,7 +13,7 @@ public class PlayerMovement : KinematicBody2D {
 
 	// State
 	[Export] public bool FacingRight { get; set; } = true;
-	private Vector2 _velocity;
+	public Vector2 Velocity;
 	private Vector2 _input;
 	private Vector2 _startPosition;
 
@@ -44,7 +44,7 @@ public class PlayerMovement : KinematicBody2D {
 	public override void _PhysicsProcess(float delta) {
 		// do this at the beginning of the frame
 		// built-in "on floor" check relies on this
-		_velocity = MoveAndSlide(_velocity, Vector2.Up);
+		Velocity = MoveAndSlide(Velocity, Vector2.Up);
 
 		ReadInput();
 		MoveH(delta);
@@ -78,24 +78,32 @@ public class PlayerMovement : KinematicBody2D {
 			FacingRight = (_input.x == 0 || !(_input.x < 0)) && FacingRight;
 		}
 
-		
+
 		if (_diveDir != 0) { // dive move
-			_velocity.x = _diveDir * WalkSpeed * 2;
+			Velocity.x = _diveDir * WalkSpeed * 2;
 		} else { // walk move
-			_velocity.x = _input.x * WalkSpeed;
+			Velocity.x = _input.x * WalkSpeed;
 		}
 
 		// dive start
 		if (Input.IsActionJustPressed("dive")) {
 			_jumping = false;
 			_diveDir = FacingRight ? 1 : -1;
-			_velocity.y = -2 * GravAccel * delta;
+			// nerf jump and roll by reducing vertical speed
+			Velocity.y = Math.Max(Velocity.y, -.5f * JumpSpeed);
+			if (_input.y > 0) {
+				// if pressing down, cut upwards momentum
+				Velocity.y = Math.Max(Velocity.y, 0);
+			} else if (Velocity.y > 0) {
+				// otherwise slow the fall
+				Velocity.y *= .5f;
+			}
+
 			_jumpTime = 0;
 		}
 		// dive cancel
 		if (_diveDir != 0 && Input.IsActionJustReleased("dive")) {
 			_sprite.Frame = Math.Max(_sprite.Frame, _sprite.Frames.GetFrameCount("dive") - 6);
-			_velocity.y = 0;
 		}
 	}
 
@@ -111,7 +119,7 @@ public class PlayerMovement : KinematicBody2D {
 			_jumpTime = 0;
 			_jumpDebounce = 0;
 			// some hang time
-			_velocity.y = Math.Max(2 * GravAccel * delta, _velocity.y);
+			Velocity.y = Math.Max(2 * GravAccel * delta, Velocity.y);
 		}
 
 		// can we jump
@@ -125,8 +133,10 @@ public class PlayerMovement : KinematicBody2D {
 
 		// jump debounce allows pressing the jump button on an early frame
 		if (Input.IsActionJustPressed("jump")) {
-			_diveJump = _diveDir != 0;
-			_jumpDebounce = _maxJumpDebounce;
+			// only get extra jump speed when pushing in the direction of the dive
+			_diveJump = _diveDir != 0 && Math.Abs(_input.x - _diveDir) < .01f;
+			// more tolerant with early jump while diving
+			_jumpDebounce = _maxJumpDebounce * (_diveDir != 0 ? 2 : 1);
 		} else {
 			_jumpDebounce -= delta;
 		}
@@ -135,16 +145,17 @@ public class PlayerMovement : KinematicBody2D {
 			_jumping = true;
 
 		if (_jumping && _jumpTime > 0) {
-			_velocity.y = -JumpSpeed;
+			Velocity.y = -JumpSpeed;
 			if (_diveJump) {
-				_velocity.y *= 1.25f;
+				Velocity.y *= 1.25f;
 			}
+
 			_jumpTime -= delta;
 		} else {
-			_velocity.y += GravAccel * delta;
+			Velocity.y += GravAccel * delta;
 		}
 
-		_velocity.y = Math.Min(_velocity.y, 2.25f * JumpSpeed);
+		Velocity.y = Math.Min(Velocity.y, 2.25f * JumpSpeed);
 	}
 
 	private void ResolveAnimation() {
@@ -154,7 +165,7 @@ public class PlayerMovement : KinematicBody2D {
 		if (_diveDir != 0) {
 			play = "dive";
 		} else if (!IsOnFloor()) {
-			if (_velocity.y > 0) {
+			if (Velocity.y > 0) {
 				play = "fall";
 			} else {
 				play = "jump";
