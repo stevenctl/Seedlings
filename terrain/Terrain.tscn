@@ -1,0 +1,13 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://terrain/Terrain.cs" type="Script" id=1]
+[ext_resource path="res://terrain/mossedge.png" type="Texture" id=2]
+[ext_resource path="res://terrain/dirt.png" type="Texture" id=3]
+
+[node name="Terrain" type="Polygon2D"]
+position = Vector2( 56, -32 )
+scale = Vector2( 1.01752, 0.997688 )
+texture = ExtResource( 3 )
+polygon = PoolVector2Array( 400.974, -216.501, 400.974, 312.723, 196.556, 312.723, -15.7245, 312.723, -15.7245, 112.26, -15.7245, -80.1854, -15.7245, -216.501, 204.418, -216.501 )
+script = ExtResource( 1 )
+edge = ExtResource( 2 )
