@@ -17,77 +17,68 @@ struct Edge {
 
 [Tool]
 public class Terrain : Polygon2D {
-	[Export] public Texture edge;
-
-	private Curve2D ToCurve() {
-		var curve = new Curve2D();
-		curve.BakeInterval = 10;
-		foreach (var p in Polygon) {
-			curve.AddPoint(p);
-			// TODO logic for adding automatic control points to make things round
-		}
-
-		curve.AddPoint(Polygon[0]);
-		curve.AddPoint(Polygon[1]);
-
-		return curve;
-	}
-
-	private static readonly Color[] colArray = {
+	private static readonly Color[] ColArray = {
 		Colors.White, Colors.White, Colors.White, Colors.White,
 	};
 
-	private static readonly Color[] colArray3 = {
-		Colors.White, Colors.White, Colors.White
-	};
+	[Export] public Texture EdgeTexture;
+	[Export] public bool DrawEdges;
+
+	private Curve2D GenCurve() {
+		// TODO assuming i'd just get a curve from smartshape somehow
+		if (_curve == null) _curve = new Curve2D();
+		_curve.ClearPoints();
+		_curve.BakeInterval = 5; // TODO parameterize
+
+		foreach (var p in Polygon) {
+			_curve.AddPoint(p);
+		}
+		// Close the polygon
+		_curve.AddPoint(Polygon[0]);
+
+		return _curve;
+	}
+
+	private Curve2D _curve;
+	private Vector2[][] _uvSegments;
+
+	private static Vector2 Rotate90(Vector2 v) {
+		return new Vector2(v.y, -v.x);
+	}
 
 	public override void _Draw() {
 		// if we don't have the edge 
-		if (edge == null) {
+		if (EdgeTexture == null) {
 			return;
 		}
 
-		// convert to a curve which will apply the "curve mode"
-		var curve = ToCurve();
+		// just so I can write this code against Curve2D to easily port to smart shape
+		GenCurve();
+		var points = _curve.GetBakedPoints();
 
-		// generate normals from baked curve
-		var normals = new List<Vector2>();
-		for (var i = 0; i < curve.GetBakedPoints().Length; i++) {
-			var cur = i >= curve.GetBakedPoints().Length ? 0 : i;
+		// generate uv segments
+		GenerateUvSegments();
 
-			var startIdx = cur - 1;
-			if (startIdx < 0) {
-				startIdx = curve.GetBakedPoints().Length + startIdx;
-			}
 
-			var endIdx = cur + 1;
-			if (endIdx > curve.GetBakedPoints().Length - 1) {
-				endIdx = endIdx - curve.GetBakedPoints().Length;
-			}
-
-			var prev = curve.GetBakedPoints()[startIdx];
-			var mid = curve.GetBakedPoints()[cur];
-			var next = curve.GetBakedPoints()[endIdx];
-
-			// interpolation between this point and the next one
-			var a = (prev - mid).Normalized();
-			var b = (next - mid).Normalized();
-
-			// interpolate between those points to get the final normal
-			var normal = new Vector2(
-				-(b - a).Normalized().y,
-				(b - a).Normalized().x
-			) * edge.GetHeight() * -1;
-
-			normals.Add(normal);
+		for (var i = 0; i < points.Length + 1; i++) {
+			var next = i + 1 >= points.Length ? 0 : i + 1;
+			var unitNormal = Rotate90((points[next] - points[i])).Normalized();
+			var normal = unitNormal * EdgeTexture.GetHeight() / 2;
+			var c = i % _uvSegments.Length != 0 ? Colors.Aqua : Colors.Green;
+			var pt = _curve.GetBakedPoints()[i];
+			DrawLine(pt, pt + normal, c);
+			DrawLine(pt, pt - normal, c);
+			DrawCircle(pt, 1, Colors.Blue);
 		}
+	}
 
-
-		var uvFraction = curve.BakeInterval / edge.GetWidth();
-		var uvSegments = new Vector2[(int) (1 / uvFraction)][];
+	private void GenerateUvSegments() {
+		// TODO - only have to do this when bake interval or edge texture change
+		var uvFraction = _curve.BakeInterval / EdgeTexture.GetWidth();
+		_uvSegments = new Vector2[(int) (1 / uvFraction)][];
 		var uvOffset = 0f;
-		for (var i = 0; i < uvSegments.Length; i++) {
-			uvSegments[i] = new[] {
+		for (var i = 0; i < _uvSegments.Length; i++) {
+			_uvSegments[i] = new[] {
 				new Vector2(uvOffset, 0),
 				new Vector2(uvOffset + uvFraction, 0),
 				new Vector2(uvOffset + uvFraction, 1),
@@ -95,112 +86,7 @@ public class Terrain : Polygon2D {
 			};
 			uvOffset += uvFraction;
 		}
-
-
-		DrawPolygon(curve.GetBakedPoints(), null, null, Texture);
-
-		var edges = new Edge[normals.Count];
-		// draw "sub" polygons from each normal, with the texture mapped to each of these polygons
-		for (var i = 0; i < normals.Count; i++) {
-			var curPt = i < curve.GetBakedPoints().Length ? i : 0;
-			var next = i + 1 < normals.Count ? i + 1 : 0;
-			var subPoly = new[] {
-				curve.GetBakedPoints()[curPt] + normals[i],
-				curve.GetBakedPoints()[next] + normals[next],
-				curve.GetBakedPoints()[next] - normals[next],
-				curve.GetBakedPoints()[curPt] - normals[i],
-			};
-			edges[i] = CalcEdge(subPoly);
-			if (edges[i].Type == EdgeType.Edge) {
-				DrawPolygon(Quad(edges[i].Polygon), colArray, uvSegments[i % uvSegments.Length], edge);
-			}
-		}
-
-		var j = 0;
-		foreach (var e in edges) {
-			Color c;
-			switch (e.Type) {
-				case EdgeType.InnerCorner:
-					c = Colors.Orange;
-					break;
-				case EdgeType.OuterCorner:
-					c = j % 2 == 0 ? Colors.Yellow : Colors.Orange;
-					break;
-				default:
-					c = j % uvSegments.Length == 0 ? Colors.Lime : Colors.Aqua;
-					break;
-			}
-
-			var closed = Close(e.Polygon);
-			DrawPolyline(closed, c);
-			DrawCircle(curve.GetBakedPoints()[j], 1, c);
-			j++;
-		}
 	}
 
-	private static Vector2[] Close(IReadOnlyList<Vector2> poly) {
-		var closed = new Vector2[poly.Count + 1];
-		for (var i = 0; i < poly.Count; i++) {
-			closed[i] = poly[i];
-		}
 
-		closed[closed.Length - 1] = closed[0];
-
-		return closed;
-	}
-
-	private static Vector2[] Quad(Vector2[] poly) {
-		if (poly.Length == 4) {
-			return poly;
-		}
-		var closed = new Vector2[poly.Length + 1];
-		for (var i = 0; i < poly.Length; i++) {
-			closed[i] = poly[i];
-		}
-
-		return closed;
-	}
-
-	private static Edge CalcEdge(Vector2[] srcPoly) {
-		if (srcPoly.Length != 4) {
-			throw new ArgumentException("The given polygon must have 4 vertices. Got: " + srcPoly.Length);
-		}
-
-		// Only segments 1 and 3 can have intersections - if that assumption breaks we can just loop with the
-		// offset starting at 0 to check 0 and 2 as well. 
-		for (var i = 0; i < 2; i++) {
-			var aFrom = srcPoly[1];
-			var aTo = srcPoly[2];
-			var bFrom = srcPoly[3];
-			var bTo = srcPoly[0];
-			var intersection = Geometry.SegmentIntersectsSegment2d(aFrom, aTo, bFrom, bTo);
-
-			if (intersection is Vector2 intersect) {
-				// use the larger sub-triangle
-				var triA = new[] {bTo, aFrom, intersect};
-				var triB = new[] {aTo, bFrom, intersect};
-				var areaA = TriangleArea(triA);
-				var areaB = TriangleArea(triB);
-
-				return areaA > areaB
-					? new Edge {Type = EdgeType.OuterCorner, Polygon = triA, OrigPolygon = srcPoly}
-					: new Edge {Type = EdgeType.InnerCorner, Polygon = triB, OrigPolygon = srcPoly};
-			}
-		}
-
-		return new Edge {Type = EdgeType.Edge, Polygon = srcPoly, OrigPolygon = srcPoly};
-	}
-
-	private static float TriangleArea(Vector2[] triangle) {
-		if (triangle.Length != 3) {
-			throw new ArgumentException("The given polygon must have 3 vertices. Got: " + triangle.Length);
-		}
-
-		var a = triangle[0];
-		var b = triangle[1];
-		var c = triangle[2];
-
-
-		return Math.Abs(a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y)) / 2f;
-	}
 }
