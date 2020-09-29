@@ -11,6 +11,7 @@ enum EdgeType {
 
 struct Edge {
 	public Vector2[] Polygon;
+	public Vector2[] OrigPolygon;
 	public EdgeType Type;
 }
 
@@ -18,12 +19,9 @@ struct Edge {
 public class Terrain : Polygon2D {
 	[Export] public Texture edge;
 
-	public override void _Ready() {
-		Color = Colors.Transparent;
-	}
-
 	private Curve2D ToCurve() {
 		var curve = new Curve2D();
+		curve.BakeInterval = 10;
 		foreach (var p in Polygon) {
 			curve.AddPoint(p);
 			// TODO logic for adding automatic control points to make things round
@@ -99,6 +97,8 @@ public class Terrain : Polygon2D {
 		}
 
 
+		DrawPolygon(curve.GetBakedPoints(), null, null, Texture);
+
 		var edges = new Edge[normals.Count];
 		// draw "sub" polygons from each normal, with the texture mapped to each of these polygons
 		for (var i = 0; i < normals.Count; i++) {
@@ -112,14 +112,53 @@ public class Terrain : Polygon2D {
 			};
 			edges[i] = CalcEdge(subPoly);
 			if (edges[i].Type == EdgeType.Edge) {
-				DrawPolygon(edges[i].Polygon, colArray, uvSegments[i % uvSegments.Length], edge);
+				DrawPolygon(Quad(edges[i].Polygon), colArray, uvSegments[i % uvSegments.Length], edge);
 			}
 		}
 
+		var j = 0;
 		foreach (var e in edges) {
-			if (e.Type == EdgeType.Edge) continue;
-			DrawPolyline(e.Polygon, e.Type == EdgeType.InnerCorner ? Colors.Aqua : Colors.Orange);
+			Color c;
+			switch (e.Type) {
+				case EdgeType.InnerCorner:
+					c = Colors.Orange;
+					break;
+				case EdgeType.OuterCorner:
+					c = j % 2 == 0 ? Colors.Yellow : Colors.Orange;
+					break;
+				default:
+					c = j % uvSegments.Length == 0 ? Colors.Lime : Colors.Aqua;
+					break;
+			}
+
+			var closed = Close(e.Polygon);
+			DrawPolyline(closed, c);
+			DrawCircle(curve.GetBakedPoints()[j], 1, c);
+			j++;
 		}
+	}
+
+	private static Vector2[] Close(IReadOnlyList<Vector2> poly) {
+		var closed = new Vector2[poly.Count + 1];
+		for (var i = 0; i < poly.Count; i++) {
+			closed[i] = poly[i];
+		}
+
+		closed[closed.Length - 1] = closed[0];
+
+		return closed;
+	}
+
+	private static Vector2[] Quad(Vector2[] poly) {
+		if (poly.Length == 4) {
+			return poly;
+		}
+		var closed = new Vector2[poly.Length + 1];
+		for (var i = 0; i < poly.Length; i++) {
+			closed[i] = poly[i];
+		}
+
+		return closed;
 	}
 
 	private static Edge CalcEdge(Vector2[] srcPoly) {
@@ -139,17 +178,17 @@ public class Terrain : Polygon2D {
 			if (intersection is Vector2 intersect) {
 				// use the larger sub-triangle
 				var triA = new[] {bTo, aFrom, intersect};
-				var triB = new[] {aTo, intersect, bFrom};
+				var triB = new[] {aTo, bFrom, intersect};
 				var areaA = TriangleArea(triA);
 				var areaB = TriangleArea(triB);
 
 				return areaA > areaB
-					? new Edge {Type = EdgeType.OuterCorner, Polygon = triA}
-					: new Edge {Type = EdgeType.InnerCorner, Polygon = triB};
+					? new Edge {Type = EdgeType.OuterCorner, Polygon = triA, OrigPolygon = srcPoly}
+					: new Edge {Type = EdgeType.InnerCorner, Polygon = triB, OrigPolygon = srcPoly};
 			}
 		}
 
-		return new Edge {Type = EdgeType.Edge, Polygon = srcPoly};
+		return new Edge {Type = EdgeType.Edge, Polygon = srcPoly, OrigPolygon = srcPoly};
 	}
 
 	private static float TriangleArea(Vector2[] triangle) {

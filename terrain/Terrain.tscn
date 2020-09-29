@@ -5,9 +5,10 @@
 [ext_resource path="res://terrain/dirt.png" type="Texture" id=3]
 
 [node name="Terrain" type="Polygon2D"]
-position = Vector2( 56, -32 )
+position = Vector2( 424, 48 )
 scale = Vector2( 1.01752, 0.997688 )
+color = Color( 1, 1, 1, 0 )
 texture = ExtResource( 3 )
-polygon = PoolVector2Array( 400.974, -216.501, 400.974, 312.723, 196.556, 312.723, -15.7245, 312.723, -15.7245, 112.26, -15.7245, -80.1854, -15.7245, -216.501, 204.418, -216.501 )
+polygon = PoolVector2Array( 432.424, 8.01854, 259.454, 152.352, 228.005, 280.649, -55.0358, 344.797, -157.245, 216.501, -204.419, 40.0927, 47.1735, 32.0742, 157.245, -136.315 )
 script = ExtResource( 1 )
 edge = ExtResource( 2 )
