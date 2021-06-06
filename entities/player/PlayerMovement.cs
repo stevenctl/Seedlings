@@ -19,6 +19,8 @@ public class PlayerMovement : KinematicBody2D {
 	private Vector2 _startPosition;
 
 	private int _diveDir;
+	private float _diveDuration;
+	private float _minDiveDuration = .5f;
 
 	private bool _jumping;
 	private bool _diveJump;
@@ -85,12 +87,14 @@ public class PlayerMovement : KinematicBody2D {
 
 		if (_diveDir != 0) { // dive move
 			Velocity.x = _diveDir * WalkSpeed * 2;
+			_diveDuration += delta;
 		} else { // walk move
 			Velocity.x = _input.x * WalkSpeed;
 		}
 
 		// dive start
 		if (Input.IsActionJustPressed("dive")) {
+			_diveDuration = 0;
 			_jumping = false;
 			_diveDir = FacingRight ? 1 : -1;
 			// nerf jump and roll by reducing vertical speed
@@ -107,14 +111,19 @@ public class PlayerMovement : KinematicBody2D {
 		}
 
 		// dive cancel
-		if (_diveDir != 0 && Input.IsActionJustReleased("dive")) {
-			var diveAnim = _animation.GetAnimation("dive");
-			diveAnim.Step = Math.Max(diveAnim.Step, diveAnim.Length / 2);
+		if (_diveDir != 0) {
+			if(IsOnWall()) {
+				EndDive("");
+			} else if (Input.IsActionJustReleased("dive")) {
+				var diveAnim = _animation.GetAnimation("dive");
+				diveAnim.Step = Math.Max(diveAnim.Step, diveAnim.Length / 2);
+			}
 		}
 	}
 
 	public void EndDive(string name) {
 		_diveDir = 0;
+		GD.Print(_diveDuration);
 	}
 
 	// Vertical Movement
@@ -152,7 +161,8 @@ public class PlayerMovement : KinematicBody2D {
 
 		if (_jumping && _jumpTime > 0) {
 			Velocity.y = -JumpSpeed;
-			if (_diveJump) {
+			// only do the dive if most recent lasted at least some time
+			if (_diveJump && _diveDuration > _minDiveDuration) {
 				Velocity.y *= 1.25f;
 			}
 

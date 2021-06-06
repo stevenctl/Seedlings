@@ -16,6 +16,7 @@ public class PlayerCamera : Camera2D {
 	}
 
 	public override void _Process(float delta) {
+		if(Engine.EditorHint) return;
 		if (Input.IsActionJustPressed("zoom")) {
 			Wide = !Wide;
 		}
